@@ -3,7 +3,7 @@ Android Rotary Wheel Menu
 -------------------------
 
 I wanted to implement a widget similar to the [Rotating Wheel Control with UIKit]( http://www.raywenderlich.com/9864/how-to-create-a-rotating-wheel-control-with-uikit )
-but on Android so I had to write my own, it is far from complete and it has an ugly drawing.
+but on Android so I had to write my own, it is far from complete and it is drawn in an ugly way.
 
 But at least the main functionality that selects a sector from the pie works without any problems.
 
