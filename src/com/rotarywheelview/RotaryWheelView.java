@@ -54,6 +54,7 @@ public class RotaryWheelView extends View {
 
 	private List<RotaryWheelMenuEntry> mMenuEntries = new ArrayList<RotaryWheelMenuEntry>();
 	
+	private RotaryWheelMenuEntry mCurrectSelection = null;
 	private RotaryWheelViewListener mListener = null;
 	private GestureDetector mDetector;
 	private boolean[] mQuadrantTouched = new boolean[] { false, false, false, false, false };
@@ -74,7 +75,7 @@ public class RotaryWheelView extends View {
 	private double mStartAngle;
 	private double mRotationAngle;
 	private int MinIconSize = scalePX(15);					//Min Size of Image in Wedge
-	private int MaxIconSize = scalePX(25);			//Max Size of Image in Wedge
+	private int MaxIconSize = scalePX(20);			//Max Size of Image in Wedge
 	//private int BitmapSize = scalePX(40);			//Size of Image in Wedge
 	private int cRadius = mMinSize - scalePX(7); 	 	//Inner Circle Radius
 	private int textSize = scalePX(10);				//TextSize
@@ -132,8 +133,9 @@ public class RotaryWheelView extends View {
         
         this.xPosition = (getResources().getDisplayMetrics().widthPixels)/2;
 		
-        this.yPosition = -50;
+        this.yPosition = 0;
         
+        setBackgroundColor(Color.CYAN);
 		determineWedges();
 		
 		
@@ -149,17 +151,18 @@ public class RotaryWheelView extends View {
 			float start_degSlice = 270 - (degSlice/2);
 	    	//calculates where to put the images
 			double rSlice = (2*Math.PI) / mWedgeQty;
-			double rStart = (2*Math.PI)*(0.75) - (rSlice/2);
+			double rStart = (2*Math.PI)*(0.75) ;
 			
-			
+			System.out.println( Math.toDegrees(rSlice));
+			System.out.println( Math.toDegrees(rStart));
 			this.mWedges = new Wedge[mWedgeQty];
 			this.iconRect = new Rect[mWedgeQty];
 			
 			for(int i = 0; i < this.mWedges.length; i++) {
-				this.mWedges[i] = new Wedge(xPosition, yPosition, 0, mMaxSize, (i
+				this.mWedges[i] = new Wedge(xPosition, yPosition, mMinSize, mMaxSize, (i
 						* degSlice)+start_degSlice, degSlice);
-				float xCenter = (float)(Math.cos(((rSlice*i)+(rSlice*0.5))+rStart) * (mMaxSize+mMinSize)/2)+xPosition;
-				float yCenter = (float)(Math.sin(((rSlice*i)+(rSlice*0.5))+rStart) * (mMaxSize+mMinSize)/2)+yPosition;
+				float xCenter = (float)(Math.cos((rSlice*i)+ rStart) * (mMaxSize+mMinSize)/2)+xPosition;
+				float yCenter = (float)(Math.sin((rSlice*i)+rStart) * (mMaxSize+mMinSize)/2)+yPosition;
 				
 				int h = MaxIconSize;
 				int w = MaxIconSize;
@@ -199,8 +202,9 @@ public class RotaryWheelView extends View {
     	mPaint.setColor(Color.RED);
     	
     	//canvas.save();
-    	canvas.scale(getWidth() / mViewRect.width(), 2.0f, xPosition, yPosition);
     	
+    	canvas.scale(getWidth() / mViewRect.width(), getHeight() / mViewRect.width(), xPosition, yPosition);
+    	//canvas.getMatrix().mapRect(mViewRect);
     	//System.out.println(mViewRect);
     	
     	
@@ -219,6 +223,8 @@ public class RotaryWheelView extends View {
 			//canvas.drawRect(f.getWedgeRegion().getBounds(), mPaint);
 			Rect rf = iconRect[i];
 			
+			//canvas.save();
+			//canvas.scale(1.0f, 1.0f, xPosition, yPosition);
 			if ((mMenuEntries.get(i).getIcon() != 0) && (mMenuEntries.get(i).getLabel() != null)) {
 				
 				//This will look for a "new line" and split into multiple lines					
@@ -307,6 +313,9 @@ public class RotaryWheelView extends View {
 					//canvas.drawRect(rf, mPaint);
 					
 			}
+			
+			//canvas.restore();
+			
     	}
     	
     	//canvas.restore();
@@ -353,7 +362,8 @@ public class RotaryWheelView extends View {
 			//canvas.drawRect(mSelectionWedgeRect, mPaint);
 			if( mWedgeRect.contains(mSelectionWedgeRect) ) {
 				if(mListener != null) {
-					mListener.onMenuEntryChanged(mMenuEntries.get(i));
+					if(mCurrectSelection != mMenuEntries.get(i)) 
+						mListener.onMenuEntryChanged(mMenuEntries.get(i));
 				}
 			}
 		}
@@ -364,7 +374,7 @@ public class RotaryWheelView extends View {
 	}
 	
 	
-	/*protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		// TODO Auto-generated method stub
 		// super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 		int wmode = MeasureSpec.getMode(widthMeasureSpec);
@@ -385,11 +395,11 @@ public class RotaryWheelView extends View {
 		//this.xPosition = width / 2;
 		//this.yPosition = height / 2;
 		
-		this.setMeasuredDimension(width, height);
+		this.setMeasuredDimension(width, height - height / 2);
 		
 		invalidate();
 
-	}*/
+	}
 	
     @Override
     public boolean onTouchEvent(MotionEvent e) {

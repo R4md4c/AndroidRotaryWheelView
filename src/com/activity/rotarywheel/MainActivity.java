@@ -1,5 +1,6 @@
 package com.activity.rotarywheel;
 
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -18,15 +19,36 @@ import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.animation.RotateAnimation;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
 	private TextView mResultTextView;
+	private ListView mListView;
 	
+	private HashMap<String, ArrayAdapter<String>> mHashmap = new HashMap<String, ArrayAdapter<String>>();
+	
+	private String[] mCategories = new String[] {
+		"Fun",
+		"Services",
+		"Auto",
+		"Drink",
+		"Travel",
+		"Urgent",
+		"Movies",
+		"Health",
+		"Stores",
+		"Favourites"
+	};
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,27 +56,55 @@ public class MainActivity extends Activity {
         
         
         RotaryWheelView wheelView = (RotaryWheelView) findViewById(R.id.wheelView);
-        wheelView.addMenuEntry(new Menu1());
-        wheelView.addMenuEntry(new Menu1());
-        wheelView.addMenuEntry(new Menu2());
-        wheelView.addMenuEntry(new Menu2());
-        wheelView.addMenuEntry(new Menu1());
-        wheelView.addMenuEntry(new Menu1());
-        wheelView.addMenuEntry(new Menu2());
-        wheelView.addMenuEntry(new Menu1());
         
-        mResultTextView = (TextView) findViewById(R.id.textView);
+        
+        init();
+        
+        //mResultTextView = (TextView) findViewById(R.id.textView);
+        mListView= (ListView) findViewById(R.id.listView);
+        
+        /*String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
+          "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+          "Linux", "OS/2" };
+
+        // First paramenter - Context
+        // Second parameter - Layout for the row
+        // Third parameter - ID of the TextView to which the data is written
+        // Forth - the Array of data
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+          R.layout.list_item, R.id.textView, values);
+
+        // Assign adapter to ListView
+        listView.setAdapter(adapter);*/ 
         
         wheelView.setRotaryWheelViewListener(new RotaryWheelViewListener() {
 			
 			@Override
 			public void onMenuEntryChanged(RotaryWheelMenuEntry menuEntry) {
+				//Toast.makeText(getApplicationContext(), menuEntry.getLabel(), Toast.LENGTH_LONG).show();
 				//System.out.println(menuEntry.getLabel());
-				mResultTextView.setText( menuEntry.getLabel() );
+				mListView.setAdapter( mHashmap.get( menuEntry.getLabel()) );
 			}
 		});
     }
 
+    
+    private void init() {
+    	RotaryWheelView wheelView = (RotaryWheelView) findViewById(R.id.wheelView);
+    	
+    	String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
+    	          "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+    	          "Linux", "OS/2" };
+    	
+    	
+    	for(int i = 0; i < mCategories.length; i++) {
+    		String str = mCategories[i];
+        	wheelView.addMenuEntry(new MenuEntry(str));
+        	mHashmap.put(str,  new ArrayAdapter<String>(this,
+        				R.layout.list_item, R.id.textView, new String[] {str, values[i]}));
+        	
+        }
+    }
     
     
     @Override
@@ -64,10 +114,15 @@ public class MainActivity extends Activity {
     }
     
    
-   public static class Menu1 implements RotaryWheelMenuEntry
+   private static class MenuEntry implements RotaryWheelMenuEntry
    {
+	  private String mLabel; 
+	  public MenuEntry(String label) {
+		  mLabel = label;
+	  }
+	  
       public String getName() { return "Menu1 - No Children"; } 
-	  public String getLabel() { return "Menu1\nTest"; } 
+	  public String getLabel() { return mLabel; } 
 	  public int getIcon() { return R.drawable.icon0; }
       public void menuActiviated()
       {
