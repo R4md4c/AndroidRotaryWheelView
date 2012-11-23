@@ -357,6 +357,8 @@ public class RotaryWheelView extends View {
 		for(int i = 0; i < mWedges.length; i++) {
 			//mWedgeRect.set( mWedges[i].getWedgeRegion().getBounds() );
 			mWedges[i].computeBounds(mWedgeRect, true);
+			
+			mWedgeRect.inset(6, 6);
 			cmt.mapRect(mWedgeRect);
 			//canvas.drawRect(mWedgeRect, mPaint);
 			//canvas.drawRect(mSelectionWedgeRect, mPaint);
