@@ -37,6 +37,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.shapes.ArcShape;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
@@ -54,7 +55,7 @@ public class RotaryWheelView extends View {
 
 	private List<RotaryWheelMenuEntry> mMenuEntries = new ArrayList<RotaryWheelMenuEntry>();
 	
-	private RotaryWheelMenuEntry mCurrectSelection = null;
+	private RotaryWheelMenuEntry mCurrentSelection = null;
 	private RotaryWheelViewListener mListener = null;
 	private GestureDetector mDetector;
 	private boolean[] mQuadrantTouched = new boolean[] { false, false, false, false, false };
@@ -67,6 +68,8 @@ public class RotaryWheelView extends View {
 	//private RadialGradient mSelectionWedgeGradient = new RadialGradient(x, y, radius, colors, positions, tile)
 	
 	private float screen_density = getContext().getResources().getDisplayMetrics().density;
+	
+	private boolean isViewInitialized;
 	
 	private int mMinSize = scalePX(35);				//Radius of inner ring size
 	private int mMaxSize = scalePX(90);				//Radius of outer ring size
@@ -135,6 +138,8 @@ public class RotaryWheelView extends View {
 		
         this.yPosition = 0;
         
+        isViewInitialized = false;
+        
         setBackgroundColor(Color.CYAN);
 		determineWedges();
 		
@@ -153,16 +158,41 @@ public class RotaryWheelView extends View {
 			double rSlice = (2*Math.PI) / mWedgeQty;
 			double rStart = (2*Math.PI)*(0.75) ;
 			
-			System.out.println( Math.toDegrees(rSlice));
-			System.out.println( Math.toDegrees(rStart));
+			
 			this.mWedges = new Wedge[mWedgeQty];
 			this.iconRect = new Rect[mWedgeQty];
 			
+			double mid = 0, min = 0, max = 0;
 			for(int i = 0; i < this.mWedges.length; i++) {
 				this.mWedges[i] = new Wedge(xPosition, yPosition, mMinSize, mMaxSize, (i
 						* degSlice)+start_degSlice, degSlice);
 				float xCenter = (float)(Math.cos((rSlice*i)+ rStart) * (mMaxSize+mMinSize)/2)+xPosition;
 				float yCenter = (float)(Math.sin((rSlice*i)+rStart) * (mMaxSize+mMinSize)/2)+yPosition;
+				
+				mid = this.mWedges[i].midValue = normalizeAngle( ((i * degSlice) + start_degSlice + degSlice) / 2 );
+				min = normalizeAngle( (i * degSlice) + start_degSlice );
+				max = normalizeAngle( (i * degSlice) + start_degSlice + degSlice);
+				
+				this.mWedges[i].minValue = min;
+				this.mWedges[i].midValue = mid;
+				this.mWedges[i].maxValue = max;
+				
+				/*if (mWedges[i].maxValue - degSlice < - 360) {
+		            mid = 360;
+		            mWedges[i].midValue = mid;
+		            mWedges[i].minValue = Math.abs(mWedges[i].maxValue);
+		            min = mWedges[i].minValue;
+		        }*/
+				
+				if( i == mWedgeQty / 2) {
+					mSelectionWedge = new Wedge(xPosition, yPosition, 0, mMaxSize, ( i * degSlice) +  start_degSlice , degSlice );
+					mSelectionWedge.midValue = mid;
+					mSelectionWedge.minValue = min;
+					mSelectionWedge.maxValue = max;
+				}
+				
+				//mid -= degSlice;
+			
 				
 				int h = MaxIconSize;
 				int w = MaxIconSize;
@@ -178,9 +208,10 @@ public class RotaryWheelView extends View {
 			}
 	    	
 			//mSelectionWedge = new Wedge(xPosition, yPosition, 0, mMaxSize, ( (mWedgeQty / 2) * degSlice) +  start_degSlice + (degSlice / 4), degSlice / 2 );
-			mSelectionWedge = new Wedge(xPosition, yPosition, 0, mMaxSize, ( (mWedgeQty / 2) * degSlice) +  start_degSlice , degSlice );
+			
 			
 			mSelectionWedgeRect = new RectF( mSelectionWedge.getWedgeRegion().getBounds() );
+			
 			mWedgeRect = new RectF();
 			
 			//Reduce the selectionWedge region with 50% to be fully contained inside the other wedges
@@ -213,9 +244,18 @@ public class RotaryWheelView extends View {
     	canvas.rotate((float)mRotationAngle, xPosition, yPosition);
     	
     	
+    	//System.out.println(normalizeAngle( mRotationAngle) );
+    	
+    	//double rotation = normalizeAngle(mRotationAngle);
     	
     	for (int i = 0; i < mWedges.length; i++) {
 			Wedge f = mWedges[i];
+			
+			/*System.out.println(rotation);
+			f.minValue += rotation;
+			f.midValue += rotation;
+			f.maxValue += rotation;*/
+			
 			mPaint.setColor(0xffBFBFBF);
 			//mPaint.setAlpha(outlineAlpha); 
 			mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -348,6 +388,20 @@ public class RotaryWheelView extends View {
     }
     
 	
+	private double normalizeAngle(double angle) {
+		if(angle >= 0) {
+			while( angle > 360 ) {
+				angle -= 360;
+			}
+		}
+		else {
+			while( angle < -360) {
+				angle += 360;
+			}
+		}
+		return angle;
+	}
+
 	private void checkSelection(Canvas canvas) {
 		Matrix cmt = new Matrix();
 		cmt.postRotate((float)mRotationAngle, xPosition, yPosition);
@@ -360,12 +414,19 @@ public class RotaryWheelView extends View {
 			
 			mWedgeRect.inset(6, 6);
 			cmt.mapRect(mWedgeRect);
+			//mPaint.setColor(Color.BLACK);
 			//canvas.drawRect(mWedgeRect, mPaint);
-			//canvas.drawRect(mSelectionWedgeRect, mPaint);
+			mPaint.setColor(Color.RED);
+			canvas.drawRect(mSelectionWedgeRect, mPaint);
 			if( mWedgeRect.contains(mSelectionWedgeRect) ) {
 				if(mListener != null) {
-					if(mCurrectSelection != mMenuEntries.get(i)) 
+					if(mCurrentSelection != mMenuEntries.get(i)) {
 						mListener.onMenuEntryChanged(mMenuEntries.get(i));
+						mCurrentSelection = mMenuEntries.get(i);
+						System.out.println(mWedges[i]);
+						System.out.println(mSelectionWedge);
+						//mRotationAngle += mSelectionWedge.midValue - mWedges[i].midValue;
+					}
 				}
 			}
 		}
@@ -419,12 +480,19 @@ public class RotaryWheelView extends View {
 			
 			mStartAngle = getAngle(eventX, eventY);
 			
+			
 			mAllowRotating = false;
 			break;
 		case MotionEvent.ACTION_MOVE:
 			double currentAngle = getAngle(eventX, eventY);
 			mRotationAngle += mStartAngle - currentAngle;
 			mStartAngle = currentAngle;
+			
+			for(Wedge w : mWedges) {
+				w.minValue += normalizeAngle(mRotationAngle);
+				w.midValue += normalizeAngle(mRotationAngle);
+				w.maxValue += normalizeAngle(mRotationAngle);
+			}
 			break;
 		case MotionEvent.ACTION_UP:
 			mAllowRotating = true;
@@ -445,6 +513,10 @@ public class RotaryWheelView extends View {
     	private float ArcWidth;
     	private Region mWedgeRegion;
     	
+    	public double minValue;
+    	public double midValue;
+    	public double maxValue;
+    	
     	private Wedge(int x, int y, int InnerSize, int OuterSize, float StartArc, float ArcWidth) {
     		super();
     		
@@ -452,6 +524,7 @@ public class RotaryWheelView extends View {
     			StartArc = StartArc-360;
     		}
     		
+    		minValue = midValue = maxValue = 0;
     		mWedgeRegion = new Region();
     		this.x = x; this.y = y;
     		this.InnerSize = InnerSize;
@@ -461,6 +534,9 @@ public class RotaryWheelView extends View {
     		this.buildPath();
     	}
     	
+    	public String toString() {
+    		return minValue + "  " + midValue + "  " + maxValue;
+    	}
     	/**
     	 * 
     	 * @return the bottom rect that will be used for intersection 

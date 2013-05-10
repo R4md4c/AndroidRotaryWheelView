@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
     	
     	for(int i = 0; i < mCategories.length; i++) {
     		String str = mCategories[i];
-        	wheelView.addMenuEntry(new MenuEntry(str));
+        	wheelView.addMenuEntry(new MenuEntry(str, i));
         	mHashmap.put(str,  new ArrayAdapter<String>(this,
         				R.layout.list_item, R.id.textView, new String[] {str, values[i]}));
         	
@@ -116,14 +116,17 @@ public class MainActivity extends Activity {
    
    private static class MenuEntry implements RotaryWheelMenuEntry
    {
-	  private String mLabel; 
-	  public MenuEntry(String label) {
+	  private String mLabel;
+	  private int mIndex;
+	  public MenuEntry(String label, int index) {
 		  mLabel = label;
+		  mIndex = index;
 	  }
 	  
       public String getName() { return "Menu1 - No Children"; } 
 	  public String getLabel() { return mLabel; } 
 	  public int getIcon() { return R.drawable.icon0; }
+	  public int getIndex() { return mIndex; }
       public void menuActiviated()
       {
     	  System.out.println( "Menu #1 Activated - No Children");
@@ -131,6 +134,7 @@ public class MainActivity extends Activity {
    }
    public static class Menu2 implements RotaryWheelMenuEntry
    {
+	  public int getIndex() { return 0; }
       public String getName() { return "Menu2 - No Children"; } 
 	  public String getLabel() { return "Menu223\nTest"; } 
 	  public int getIcon() { return R.drawable.icon1; }

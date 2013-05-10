@@ -10,4 +10,5 @@ public interface RotaryWheelMenuEntry {
     
     public void menuActiviated();
     
+    public int getIndex();
 }
